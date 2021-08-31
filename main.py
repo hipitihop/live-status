@@ -64,7 +64,6 @@ def main():
     notified_on = False
     while True:
         ts = datetime.utcnow().isoformat()[:-3]+'Z'
-        print("debounce value:", on_debounce)
         current_state = current_video_status()
         if current_state == "1":
             on_debounce += 1
@@ -75,12 +74,12 @@ def main():
         if current_state == "0" and current_state != prior_status:
             prior_status = current_state
             mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_state, "ts": ts}))
-            print("changed to:", current_state)
+            print(f"changed to: {current_state} ts: {ts}")
         elif on_debounce >= resolution_in_seconds and not notified_on:
             prior_status = current_state
             mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_state, "ts": ts}))
             notified_on = True
-            print("changed to:", current_state)
+            print(f"changed to: {current_state} ts: {ts}")
 
         time.sleep(resolution_in_seconds)
 
