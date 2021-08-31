@@ -1,18 +1,17 @@
-import os
+import json
+import platform
 import re
+import os
 import subprocess
 import time
+from datetime import datetime
 from paho.mqtt import client as mqtt_client
-import platform
-import json
 
 # Every so many seconds, check the status of the uvcvideo device
 # and whenever it changes, post the status change to MQTT
 
 broker = "192.168.0.102"
 port = 1883
-client_id = "oceanus2"
-topic = f"on-air/{client_id}/status"
 
 
 def connect_mqtt():
@@ -55,14 +54,16 @@ def filter_regex(datalist, rexp):
 
 def main():
     resolution_in_seconds = 2
+    ts = datetime.utcnow().isoformat()[:-3]+'Z'
     prior_status = current_video_status()
     mqtt_topic = f"transmit_posture/{platform.node()}/status"
-    mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": prior_status}))
+    mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": prior_status, "ts": ts}))
     # when off, debounce sporadic noise which triggers on, by waiting for enough
     # resolution cycles to occur in the on position before we report it.
     on_debounce = 0
     notified_on = False
     while True:
+        ts = datetime.utcnow().isoformat()[:-3]+'Z'
         print("debounce value:", on_debounce)
         current_state = current_video_status()
         if current_state == "1":
@@ -73,11 +74,11 @@ def main():
 
         if current_state == "0" and current_state != prior_status:
             prior_status = current_state
-            mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_state}))
+            mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_state, "ts": ts}))
             print("changed to:", current_state)
         elif on_debounce >= resolution_in_seconds and not notified_on:
             prior_status = current_state
-            mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_state}))
+            mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_state, "ts": ts}))
             notified_on = True
             print("changed to:", current_state)
 
