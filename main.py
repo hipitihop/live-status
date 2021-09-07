@@ -46,40 +46,68 @@ def current_video_status():
     return status
 
 
-# filter for uvcvideo
-def filter_regex(datalist, rexp):
-    return [val for val in datalist
-            if re.search(rexp, val.__str__())]
+def current_mic_status():
+    # TODO: as opposed to specific strings, parse just "alsa_input.xxxx" so that any microphone is detected.
+    results = subprocess.run(args=["pactl", "list", "sources", "short"], capture_output=True).stdout.decode().splitlines()
+    status = 0
+    for line in results:
+        line_parts = line.split()
+        if line_parts[1] == "alsa_input.usb-BLUE_MICROPHONE_Blue_Snowball_201306-00.mono-fallback":
+            status = line_parts[6]
+    return status
 
 
 def main():
+    # Our transmit posture is considered to be a combination of either the microphone or the video being used/grabbed
+    # by any application like Google Meet, Zoom etc. We detect the microphone and the video device state separately,
+    # we don't detect what app is using them. So for example, if you start Cheese which only uses video, and something
+    # In the case of the video/webcam, we can detected if the video is live via uvcvideo such that
+    # if Google Meet is open, but the video off button is pressed, we see this. Conversely, if the
+    # video is turned on via the button, we detect the change. However, with the Microphone we
+    # only see if it is being used by the app and this is considered the Mic being live,
+    # but we don't detect if it is muted or not. Either way, if either of them are considered on
+    # then our posture is considered as on (transmitting).
+    #
+    # As you ar
     resolution_in_seconds = 2
     ts = datetime.utcnow().isoformat()[:-3]+'Z'
-    prior_status = current_video_status()
+    prior_vid_state = current_video_status()
+    prior_mic_state = current_mic_status()
+    prior_posture = '1' if prior_vid_state == '1' or prior_mic_state == 'RUNNING' '1' else '0'
     mqtt_topic = f"transmit_posture/{platform.node()}/status"
-    mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": prior_status, "ts": ts}))
+    mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": prior_posture, "ts": ts}))
+    print(f"current posture: {prior_posture} ts: {ts}")
     # when off, debounce sporadic noise which triggers on, by waiting for enough
     # resolution cycles to occur in the on position before we report it.
     on_debounce = 0
     notified_on = False
     while True:
         ts = datetime.utcnow().isoformat()[:-3]+'Z'
-        current_state = current_video_status()
-        if current_state == "1":
+        current_vid_state = current_video_status()
+        current_mic_state = current_mic_status()
+        current_posture = '0'
+        if current_vid_state == '1' or current_mic_state == 'RUNNING':
+            current_posture = '1'
+        # print(f"state vid: {current_vid_state} mic: {current_mic_state} posture: {current_posture} ts: {ts}")
+        if current_vid_state == "1":
             on_debounce += 1
         else:
             on_debounce = 0
             notified_on = False
 
-        if current_state == "0" and current_state != prior_status:
-            prior_status = current_state
-            mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_state, "ts": ts}))
-            print(f"changed to: {current_state} ts: {ts}")
+        if current_posture == "0" and current_posture != prior_posture:
+            prior_vid_state = current_vid_state
+            prior_mic_state = current_mic_state
+            prior_posture = current_posture
+            mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_posture, "ts": ts}))
+            print(f"posture changed to: {current_posture} ts: {ts}")
         elif on_debounce >= resolution_in_seconds and not notified_on:
-            prior_status = current_state
-            mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_state, "ts": ts}))
+            prior_vid_state = current_vid_state
+            prior_mic_state = current_mic_state
+            prior_posture = current_posture
+            mqtt.publish(topic=mqtt_topic, payload=json.dumps({"status": current_posture, "ts": ts}))
             notified_on = True
-            print(f"changed to: {current_state} ts: {ts}")
+            print(f"posture changed to: {current_posture} ts: {ts}")
 
         time.sleep(resolution_in_seconds)
 
