@@ -88,8 +88,8 @@ def main():
         current_posture = '0'
         if current_vid_state == '1' or current_mic_state == 'RUNNING':
             current_posture = '1'
-        # print(f"state vid: {current_vid_state} mic: {current_mic_state} posture: {current_posture} ts: {ts}")
-        if current_vid_state == "1":
+        print(f"state vid: {current_vid_state} mic: {current_mic_state} posture: {current_posture} ts: {ts}")
+        if current_vid_state == "1" or current_mic_state == 'RUNNING':
             on_debounce += 1
         else:
             on_debounce = 0
