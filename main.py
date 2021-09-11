@@ -1,17 +1,25 @@
 import json
 import platform
 import re
-import os
 import subprocess
 import time
 from datetime import datetime
 from paho.mqtt import client as mqtt_client
 
-# Every so many seconds, check the status of the uvcvideo device
-# and whenever it changes, post the status change to MQTT
+"""
+Periodically checks the status of video device and microphones.
+Whenever the combined status changes, post the status change to MQTT.
+
+- Video device usage is detected via "lsmod" based on "uvcvideo" device. See: current_video_status()
+- Microphone usage is detected via "pactl" and detects anything listed as an "alsa_input.".
+  See: current_mic_status()
+  NOTE: This detects if an application like Google Meet has grabbed the microphone, but does not
+        detect if the microphone is muted or not. If the host has more then one device then all are considered. 
+"""
 
 broker = "192.168.0.102"
 port = 1883
+alsa_input_regex = r"^alsa_input\."
 
 
 def connect_mqtt():
@@ -47,13 +55,12 @@ def current_video_status():
 
 
 def current_mic_status():
-    # TODO: as opposed to specific strings, parse just "alsa_input.xxxx" so that any microphone is detected.
     results = subprocess.run(args=["pactl", "list", "sources", "short"], capture_output=True).stdout.decode().splitlines()
-    status = 0
+    status = "SUSPENDED"
     for line in results:
         line_parts = line.split()
-        if line_parts[1] == "alsa_input.usb-BLUE_MICROPHONE_Blue_Snowball_201306-00.mono-fallback":
-            status = line_parts[6]
+        if re.match(alsa_input_regex, line_parts[1]) and line_parts[6] == "RUNNING":
+            return "RUNNING"
     return status
 
 
@@ -88,7 +95,7 @@ def main():
         current_posture = '0'
         if current_vid_state == '1' or current_mic_state == 'RUNNING':
             current_posture = '1'
-        print(f"state vid: {current_vid_state} mic: {current_mic_state} posture: {current_posture} ts: {ts}")
+        # print(f"state vid: {current_vid_state} mic: {current_mic_state} posture: {current_posture} ts: {ts}")
         if current_vid_state == "1" or current_mic_state == 'RUNNING':
             on_debounce += 1
         else:
