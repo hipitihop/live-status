@@ -37,7 +37,7 @@ to do the physical part. As an example, the author does this:
 Obviously there are simpler ways, like a simple USB or serially driven On Air LED light and using a Raspberry Pi Zero.
 The possibilities are endless, and left as an exercise for the reader.
 
-The example of the author's picture card visible through numerous Home Assistant dashboard in the house.
+The example of the author's picture card visible through numerous Home Assistant dashboards in the house.
 
 ![Office On Air](resources/status-off-air.png)
 ![Office On Air](resources/status-on-air.png)
