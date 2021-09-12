@@ -1,0 +1,24 @@
+[Unit]
+After=network.target
+Description=Transmit Posture an On-Air Service. Monitor video & microphone.
+# To run as a service, copy the transmit-posture.sh to /usr/sbin or
+# comparable path on your distro.
+#
+# NOTE:
+#  When run as a service, only the video detection works, not microphone.
+#  Microphone detection uses "pactl" to detect use and this needs to run
+#  as user, and services run as root/sudo.
+#  If this limitation does not effect you, then you are fine to run it as a
+#  service. Alternately, setup the transmit-posture.sh as a start app.
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/transmit-posture.sh
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=%n
+
+[Install]
+WantedBy=multi-user.target
