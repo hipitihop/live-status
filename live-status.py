@@ -18,7 +18,7 @@ Whenever the combined status changes, post the status change to MQTT.
         detect if the microphone is muted or not. If the host has more then one device then all are considered. 
 """
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(asctime)s - %(message)s')
-broker = "192.168.0.102"
+broker = "localhost"
 port = 1883
 alsa_input_regex = r"^alsa_input\."
 resolution_in_seconds = 2
