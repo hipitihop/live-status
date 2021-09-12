@@ -12,7 +12,7 @@ A service to detect video and microphone use on your host and posts status chang
 Many of us regularly use video and voice to collaborate with colleagues in online meetings,
 record videos, podcasts and the like. We do this in our workplace office or in dedicated areas in our house. 
 Unfortunately it is almost impossible for those we live or work with to known when you are
-live and On-Air, particularly behind closed doors. In turn, those with whom you co-inhabit don't know when they need 
+live and On-Air, particularly behind closed doors. In turn, those with whom you co-habit don't know when they need 
 to be extra quiet or avoid walking in to your live session with a culinary or even a salacious treat.
 
 This small service aims to alleviate the confusion and detect and post your current live status
