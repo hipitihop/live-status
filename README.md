@@ -60,6 +60,6 @@ Run live-status.sh from this repo via `./live-status.sh`
 Just setup live-status.sh to run on startup, e.g. on Ubuntu as a [startup app](https://askubuntu.com/questions/48321/how-do-i-start-applications-automatically-on-login)
 Alternately, you can set it up to run as a service (an example `live-status.service` file included).
 
-> NOTE: When run as a servie, due to `pactl` needing to run as user, then detecting microphones does not work.
+> NOTE: When run as a service, due to `pactl` needing to run as user, then detecting microphones does not work.
 
 
